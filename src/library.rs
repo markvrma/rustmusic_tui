@@ -1,10 +1,6 @@
 use anyhow::{Context, Result};
 use image::{DynamicImage, ImageReader};
-use lofty::{
-    file::{AudioFile, TaggedFileExt},
-    probe::Probe,
-    tag::{Accessor, Tag},
-};
+use lofty::{Accessor, AudioFile, Probe, Tag, TaggedFileExt};
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
@@ -24,7 +20,6 @@ pub struct Song {
 pub struct Album {
     pub title: String,
     pub artist: String,
-    pub year: Option<u32>,
     pub songs: Vec<Song>,
     pub cover: Option<DynamicImage>,
 }
@@ -66,7 +61,6 @@ pub fn load_library(root: &Path) -> Result<Vec<Album>> {
                             .and_then(|t| t.album().map(|s| s.to_string()))
                             .unwrap_or_else(|| "Unknown Album".to_string());
 
-                        let year = tag.and_then(|t| t.year());
                         let track_number = tag.and_then(|t| t.track());
 
                         let duration = tagged_file.properties().duration().as_secs();
@@ -92,7 +86,6 @@ pub fn load_library(root: &Path) -> Result<Vec<Album>> {
                             let album = Album {
                                 title: album_title,
                                 artist,
-                                year,
                                 songs: vec![song],
                                 cover,
                             };
@@ -117,7 +110,7 @@ pub fn load_library(root: &Path) -> Result<Vec<Album>> {
     Ok(album_list)
 }
 
-fn extract_cover(path: &Path, tag: Option<&impl Accessor>) -> Option<DynamicImage> {
+fn extract_cover(path: &Path, tag: Option<&Tag>) -> Option<DynamicImage> {
     // 1. Try embedded art
     if let Some(tag) = tag {
         if let Some(picture) = tag.pictures().first() {

@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Gauge, List, ListItem},
     Frame,
 };
-use ratatui_image::Image;
+use ratatui_image::StatefulImage;
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
@@ -101,9 +101,9 @@ fn draw_art(f: &mut Frame, app: &mut App, area: Rect) {
     let inner_area = block.inner(area);
     f.render_widget(block, area);
 
-    if let Some(protocol) = &app.current_cover_protocol {
-        let image = Image::new(&**protocol);
-        f.render_widget(image, inner_area);
+    if let Some(protocol) = &mut app.current_cover_protocol {
+        let image = StatefulImage::default();
+        f.render_stateful_widget(image, inner_area, protocol);
     }
 }
 

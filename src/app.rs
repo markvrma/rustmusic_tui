@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ratatui::widgets::ListState;
 use ratatui_image::picker::Picker;
-use ratatui_image::protocol::Protocol;
+use ratatui_image::protocol::StatefulProtocol;
 use std::time::Duration;
 
 use crate::audio::AudioPlayer;
@@ -23,7 +23,7 @@ pub struct App {
     pub song_list_state: ListState,
 
     pub picker: Picker,
-    pub current_cover_protocol: Option<Box<dyn Protocol>>,
+    pub current_cover_protocol: Option<StatefulProtocol>,
 
     pub should_quit: bool,
     pub current_song: Option<(usize, usize)>, // (album_idx, song_idx) playing
@@ -34,12 +34,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Result<Self> {
-        let config = Config::load()?;
+    pub fn new(config: Config) -> Result<Self> {
         let albums = load_library(&config.music_directory)?;
         let audio_player = AudioPlayer::new()?;
 
-        let picker = Picker::from_termios()?;
+        let mut picker = Picker::from_query_stdio()?;
 
         // Initialize state
         let mut album_list_state = ListState::default();
@@ -72,7 +71,7 @@ impl App {
                 if let Some(img) = &album.cover {
                     // Create protocol
                     let protocol = self.picker.new_resize_protocol(img.clone());
-                    self.current_cover_protocol = Some(Box::new(protocol));
+                    self.current_cover_protocol = Some(protocol);
                 } else {
                     self.current_cover_protocol = None;
                 }

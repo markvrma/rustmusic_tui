@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
+use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -106,7 +106,9 @@ impl AudioPlayer {
         status.elapsed_before_pause = Duration::ZERO;
     }
 
-    pub fn seek(&mut self, seconds: i64) {
+    pub fn seek(&mut self, _seconds: i64) {
+        // Seek is disabled for now due to rodio version compatibility
+        /*
         let current = self.get_progress();
         let new_pos = if seconds >= 0 {
             current + Duration::from_secs(seconds as u64)
@@ -126,6 +128,7 @@ impl AudioPlayer {
             }
             status.elapsed_before_pause = new_pos;
         }
+        */
     }
 
     pub fn get_progress(&self) -> Duration {
