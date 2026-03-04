@@ -1,4 +1,5 @@
 use anyhow::Result;
+use image::imageops::FilterType;
 use ratatui::widgets::ListState;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
@@ -69,15 +70,12 @@ impl App {
         if let Some(idx) = self.album_list_state.selected() {
             if let Some(album) = self.albums.get(idx) {
                 if let Some(img) = &album.cover {
-                    // Normalize image to square to ensure consistent sizing
-                    let (w, h) = (img.width(), img.height());
-                    let size = std::cmp::min(w, h);
-                    let x = (w - size) / 2;
-                    let y = (h - size) / 2;
-                    let cropped = img.crop_imm(x, y, size, size);
+                    // Resize to fill a square area (600x600) with high quality filter
+                    // This handles cropping to square aspect ratio and anti-aliasing
+                    let resized = img.resize_to_fill(600, 600, FilterType::Lanczos3);
 
                     // Create protocol
-                    let protocol = self.picker.new_resize_protocol(cropped);
+                    let protocol = self.picker.new_resize_protocol(resized);
                     self.current_cover_protocol = Some(protocol);
                 } else {
                     self.current_cover_protocol = None;
