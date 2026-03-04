@@ -69,8 +69,15 @@ impl App {
         if let Some(idx) = self.album_list_state.selected() {
             if let Some(album) = self.albums.get(idx) {
                 if let Some(img) = &album.cover {
+                    // Normalize image to square to ensure consistent sizing
+                    let (w, h) = (img.width(), img.height());
+                    let size = std::cmp::min(w, h);
+                    let x = (w - size) / 2;
+                    let y = (h - size) / 2;
+                    let cropped = img.crop_imm(x, y, size, size);
+
                     // Create protocol
-                    let protocol = self.picker.new_resize_protocol(img.clone());
+                    let protocol = self.picker.new_resize_protocol(cropped);
                     self.current_cover_protocol = Some(protocol);
                 } else {
                     self.current_cover_protocol = None;
