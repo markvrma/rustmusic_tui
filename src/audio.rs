@@ -153,4 +153,9 @@ impl AudioPlayer {
         let status = self.status.lock().unwrap();
         !self.sink.empty() && status.state == PlayerState::Playing
     }
+
+    pub fn is_finished(&self) -> bool {
+        let status = self.status.lock().unwrap();
+        self.sink.empty() && status.state == PlayerState::Playing
+    }
 }

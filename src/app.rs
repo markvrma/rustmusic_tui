@@ -38,7 +38,7 @@ impl App {
         let albums = load_library(&config.music_directory)?;
         let audio_player = AudioPlayer::new()?;
 
-        let mut picker = Picker::from_query_stdio()?;
+        let picker = Picker::from_query_stdio()?;
 
         // Initialize state
         let mut album_list_state = ListState::default();
@@ -110,6 +110,62 @@ impl App {
             let t_sec = total.as_secs() % 60;
 
             self.playback_time = format!("{:02}:{:02} / {:02}:{:02}", p_min, p_sec, t_min, t_sec);
+        } else if self.audio_player.is_finished() {
+            // Autoplay next song
+            self.play_next();
+        }
+    }
+
+    pub fn play_next(&mut self) {
+        if let Some((alb_idx, song_idx)) = self.current_song {
+            if let Some(album) = self.albums.get(alb_idx) {
+                if song_idx < album.songs.len() - 1 {
+                    // Play next song in same album
+                    let next_song_idx = song_idx + 1;
+                    if let Some(song) = album.songs.get(next_song_idx) {
+                        if self.audio_player.play_file(&song.path).is_ok() {
+                            self.current_song = Some((alb_idx, next_song_idx));
+                            // Update UI selection if we are viewing this album
+                            if self.current_view == View::SongList {
+                                if let Some(selected_alb_idx) = self.album_list_state.selected() {
+                                    if selected_alb_idx == alb_idx {
+                                        self.song_list_state.select(Some(next_song_idx));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Album finished. Loop to first song? Or Stop?
+                    // Let's stop for now, or we could go to next album.
+                    // Let's implement Next Album logic
+                    if alb_idx < self.albums.len() - 1 {
+                        let next_alb_idx = alb_idx + 1;
+                        if let Some(next_album) = self.albums.get(next_alb_idx) {
+                            if let Some(song) = next_album.songs.first() {
+                                if self.audio_player.play_file(&song.path).is_ok() {
+                                    self.current_song = Some((next_alb_idx, 0));
+                                    if self.current_view == View::SongList {
+                                        // If we are looking at the old album, maybe switch to new one?
+                                        // User experience: if I'm browsing, don't jerk me around.
+                                        // But if I'm listening, I want to see what's playing.
+                                        // Let's only update selection if we are viewing the *previous* album
+                                        if let Some(selected_alb_idx) =
+                                            self.album_list_state.selected()
+                                        {
+                                            if selected_alb_idx == alb_idx {
+                                                self.album_list_state.select(Some(next_alb_idx));
+                                                self.song_list_state.select(Some(0));
+                                                self.update_cover();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
