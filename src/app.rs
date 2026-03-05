@@ -41,7 +41,10 @@ pub struct App {
 
 impl App {
     pub fn new(config: Config) -> Result<Self> {
-        // ... (existing setup code)
+        let albums = load_library(&config.music_directory)?;
+        let audio_player = AudioPlayer::new()?;
+        let picker = Picker::from_query_stdio()?;
+
         let mut album_list_state = ListState::default();
         if !albums.is_empty() {
             album_list_state.select(Some(0));
@@ -68,7 +71,57 @@ impl App {
 
         Ok(app)
     }
-    // ...
+    pub fn update_cover(&mut self) {
+        if let Some(idx) = self.album_list_state.selected() {
+            if let Some(album) = self.albums.get(idx) {
+                if let Some(img) = &album.cover {
+                    // Create protocol directly from the image without modification
+                    let protocol = self.picker.new_resize_protocol(img.clone());
+                    self.current_cover_protocol = Some(protocol);
+                } else {
+                    self.current_cover_protocol = None;
+                }
+            }
+        }
+    }
+
+    pub fn on_tick(&mut self) {
+        // Update playback progress
+        if self.audio_player.is_playing() {
+            let progress = self.audio_player.get_progress();
+            let total = if let Some((alb_idx, song_idx)) = self.current_song {
+                if let Some(alb) = self.albums.get(alb_idx) {
+                    if let Some(song) = alb.songs.get(song_idx) {
+                        Duration::from_secs(song.duration)
+                    } else {
+                        Duration::from_secs(0)
+                    }
+                } else {
+                    Duration::from_secs(0)
+                }
+            } else {
+                Duration::from_secs(0)
+            };
+
+            if total.as_secs() > 0 {
+                self.playback_progress = progress.as_secs_f64() / total.as_secs_f64();
+                self.playback_progress = self.playback_progress.clamp(0.0, 1.0);
+            } else {
+                self.playback_progress = 0.0;
+            }
+
+            let p_min = progress.as_secs() / 60;
+            let p_sec = progress.as_secs() % 60;
+            let t_min = total.as_secs() / 60;
+            let t_sec = total.as_secs() % 60;
+
+            self.playback_time = format!("{:02}:{:02} / {:02}:{:02}", p_min, p_sec, t_min, t_sec);
+        } else if self.audio_player.is_finished() {
+            // Autoplay next song
+            self.play_next();
+        }
+    }
+
     pub fn on_key(&mut self, c: char) {
         self.input_buffer.push(c);
         if self.input_buffer.len() > 10 {
