@@ -1,5 +1,5 @@
 use anyhow::Result;
-use image::imageops::FilterType;
+use ratatui::style::Color;
 use ratatui::widgets::ListState;
 use ratatui_image::picker::Picker;
 use ratatui_image::protocol::StatefulProtocol;
@@ -32,6 +32,10 @@ pub struct App {
     // For progress bar
     pub playback_progress: f64, // 0.0 to 1.0
     pub playback_time: String,  // "mm:ss / mm:ss"
+
+    // Easter egg
+    pub input_buffer: String,
+    pub theme_color: Color,
 }
 
 impl App {
@@ -59,6 +63,8 @@ impl App {
             current_song: None,
             playback_progress: 0.0,
             playback_time: String::new(),
+            input_buffer: String::new(),
+            theme_color: Color::White,
         };
 
         app.update_cover();
@@ -70,12 +76,8 @@ impl App {
         if let Some(idx) = self.album_list_state.selected() {
             if let Some(album) = self.albums.get(idx) {
                 if let Some(img) = &album.cover {
-                    // Resize to fill a square area (600x600) with high quality filter
-                    // This handles cropping to square aspect ratio and anti-aliasing
-                    let resized = img.resize_to_fill(600, 600, FilterType::Lanczos3);
-
-                    // Create protocol
-                    let protocol = self.picker.new_resize_protocol(resized);
+                    // Create protocol directly from the image without modification
+                    let protocol = self.picker.new_resize_protocol(img.clone());
                     self.current_cover_protocol = Some(protocol);
                 } else {
                     self.current_cover_protocol = None;
@@ -118,6 +120,17 @@ impl App {
         } else if self.audio_player.is_finished() {
             // Autoplay next song
             self.play_next();
+        }
+    }
+
+    pub fn on_key(&mut self, c: char) {
+        self.input_buffer.push(c);
+        if self.input_buffer.len() > 10 {
+            self.input_buffer.remove(0);
+        }
+
+        if self.input_buffer.ends_with("hmb") {
+            self.theme_color = Color::Magenta;
         }
     }
 

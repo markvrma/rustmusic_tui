@@ -49,43 +49,44 @@ fn run_app(terminal: &mut tui::Tui, app: &mut App) -> Result<()> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char('q') | KeyCode::Esc => {
+                        KeyCode::Char(c) => {
+                            app.on_key(c);
+                            match c {
+                                'q' => app.should_quit = true,
+                                'j' => match app.current_view {
+                                    View::AlbumList => app.next_album(),
+                                    View::SongList => app.next_song(),
+                                },
+                                'k' => match app.current_view {
+                                    View::AlbumList => app.prev_album(),
+                                    View::SongList => app.prev_song(),
+                                },
+                                'J' => {
+                                    if app.current_view == View::SongList {
+                                        app.back_action();
+                                    }
+                                }
+                                'H' => {
+                                    if app.current_view == View::SongList {
+                                        app.prev_album();
+                                    }
+                                }
+                                'L' => {
+                                    if app.current_view == View::SongList {
+                                        app.next_album();
+                                    }
+                                }
+                                'h' => app.seek_backward(),
+                                'l' => app.seek_forward(),
+                                ' ' => app.play_pause(),
+                                _ => {}
+                            }
+                        }
+                        KeyCode::Esc => {
                             app.should_quit = true;
-                        }
-                        KeyCode::Char('j') => match app.current_view {
-                            View::AlbumList => app.next_album(),
-                            View::SongList => app.next_song(),
-                        },
-                        KeyCode::Char('k') => match app.current_view {
-                            View::AlbumList => app.prev_album(),
-                            View::SongList => app.prev_song(),
-                        },
-                        KeyCode::Char('J') => {
-                            if app.current_view == View::SongList {
-                                app.back_action();
-                            }
-                        }
-                        KeyCode::Char('H') => {
-                            if app.current_view == View::SongList {
-                                app.prev_album();
-                            }
-                        }
-                        KeyCode::Char('L') => {
-                            if app.current_view == View::SongList {
-                                app.next_album();
-                            }
-                        }
-                        KeyCode::Char('h') => {
-                            app.seek_backward();
-                        }
-                        KeyCode::Char('l') => {
-                            app.seek_forward();
                         }
                         KeyCode::Enter => {
                             app.enter_action();
-                        }
-                        KeyCode::Char(' ') => {
-                            app.play_pause();
                         }
                         _ => {}
                     }

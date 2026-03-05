@@ -48,7 +48,8 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .title(Line::from(title));
+        .border_style(Style::default().fg(app.theme_color))
+        .title(Line::from(title).style(Style::default().fg(app.theme_color)));
 
     match app.current_view {
         View::AlbumList => {
@@ -60,7 +61,11 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
 
             let list = List::new(items)
                 .block(block)
-                .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+                .highlight_style(
+                    Style::default()
+                        .add_modifier(Modifier::REVERSED)
+                        .fg(app.theme_color),
+                )
                 .highlight_symbol("> ");
 
             f.render_stateful_widget(list, area, &mut app.album_list_state);
@@ -82,7 +87,11 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
 
                     let list = List::new(items)
                         .block(block)
-                        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+                        .highlight_style(
+                            Style::default()
+                                .add_modifier(Modifier::REVERSED)
+                                .fg(app.theme_color),
+                        )
                         .highlight_symbol("> ");
 
                     f.render_stateful_widget(list, area, &mut app.song_list_state);
@@ -97,7 +106,10 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn draw_art(f: &mut Frame, app: &mut App, area: Rect) {
-    let block = Block::default().borders(Borders::ALL).title(" Album Art ");
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(app.theme_color))
+        .title(Line::from(" Album Art ").style(Style::default().fg(app.theme_color)));
     let inner_area = block.inner(area);
     f.render_widget(block, area);
 
@@ -108,7 +120,10 @@ fn draw_art(f: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn draw_player(f: &mut Frame, app: &mut App, area: Rect) {
-    let block = Block::default().borders(Borders::ALL).title(" Player ");
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(app.theme_color))
+        .title(Line::from(" Player ").style(Style::default().fg(app.theme_color)));
 
     let label = if let Some((alb_idx, song_idx)) = app.current_song {
         if let Some(alb) = app.albums.get(alb_idx) {
@@ -126,7 +141,11 @@ fn draw_player(f: &mut Frame, app: &mut App, area: Rect) {
 
     let gauge = Gauge::default()
         .block(block)
-        .gauge_style(Style::default().fg(Color::Cyan))
+        .gauge_style(Style::default().fg(if app.theme_color == Color::Magenta {
+            Color::Magenta
+        } else {
+            Color::Cyan
+        }))
         .ratio(app.playback_progress)
         .label(Span::styled(label, Style::default().fg(Color::White)));
 
