@@ -8,6 +8,10 @@ use ratatui::{
 };
 use ratatui_image::StatefulImage;
 
+use ratatui::widgets::Paragraph;
+
+// ...
+
 pub fn draw(f: &mut Frame, app: &mut App) {
     // Render background
     let bg_block = Block::default().style(Style::default().bg(app.bg_color));
@@ -32,6 +36,36 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     draw_list(f, app, left_area);
     draw_art(f, app, right_area);
     draw_player(f, app, bottom_area);
+
+    // Draw chicken if active
+    if app.bg_color != Color::Reset {
+        let width = f.area().width as usize;
+        if width > 10 {
+            let cycle = width * 2;
+            let pos_in_cycle = app.chicken_tick % cycle;
+
+            let (x, facing_right) = if pos_in_cycle < width {
+                (pos_in_cycle, true)
+            } else {
+                (2 * width - pos_in_cycle, false)
+            };
+
+            // Ensure x fits
+            let x = x.min(width - 5) as u16;
+            let y = f.area().height - 2; // Bottom area
+
+            let chicken_sprite = if facing_right {
+                "  _\n🐤"
+            } else {
+                "  _\n🐤"
+            };
+
+            let area = Rect::new(x, y - 1, 6, 2);
+            let p = Paragraph::new(chicken_sprite)
+                .style(Style::default().fg(Color::Yellow).bg(app.bg_color));
+            f.render_widget(p, area);
+        }
+    }
 }
 
 fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {

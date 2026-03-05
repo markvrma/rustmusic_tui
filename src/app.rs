@@ -37,6 +37,7 @@ pub struct App {
     pub input_buffer: String,
     pub theme_color: Color,
     pub bg_color: Color,
+    pub chicken_tick: usize,
 }
 
 impl App {
@@ -65,6 +66,7 @@ impl App {
             input_buffer: String::new(),
             theme_color: Color::White,
             bg_color: Color::Reset,
+            chicken_tick: 0,
         };
 
         app.update_cover();
@@ -86,6 +88,10 @@ impl App {
     }
 
     pub fn on_tick(&mut self) {
+        if self.bg_color != Color::Reset {
+            self.chicken_tick = self.chicken_tick.wrapping_add(1);
+        }
+
         // Update playback progress
         if self.audio_player.is_playing() {
             let progress = self.audio_player.get_progress();
@@ -132,7 +138,7 @@ impl App {
             // Bright Pink for borders/text (Magenta or a specific RGB)
             self.theme_color = Color::Magenta;
             // Light Pink for background (RGB: 255, 182, 193)
-            self.bg_color = Color::Rgb(255, 182, 193);
+            self.bg_color = Color::Rgb(255, 113, 193);
         }
     }
 
