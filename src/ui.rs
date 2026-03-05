@@ -9,6 +9,10 @@ use ratatui::{
 use ratatui_image::StatefulImage;
 
 pub fn draw(f: &mut Frame, app: &mut App) {
+    // Render background
+    let bg_block = Block::default().style(Style::default().bg(app.bg_color));
+    f.render_widget(bg_block, f.area());
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(0), Constraint::Length(3)])
@@ -141,11 +145,7 @@ fn draw_player(f: &mut Frame, app: &mut App, area: Rect) {
 
     let gauge = Gauge::default()
         .block(block)
-        .gauge_style(Style::default().fg(if app.theme_color == Color::Magenta {
-            Color::Magenta
-        } else {
-            Color::Cyan
-        }))
+        .gauge_style(Style::default().fg(app.theme_color))
         .ratio(app.playback_progress)
         .label(Span::styled(label, Style::default().fg(Color::White)));
 
